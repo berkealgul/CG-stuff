@@ -1,70 +1,35 @@
-#include <GL/glew.h>
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 
 #include <iostream>
 
+int main() {
+    glfwInit();
 
-static unsigned int CreateShader(const std::string& source)
-{
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
 
-}
+    uint32_t extensionCount = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
-int main(void)
-{
-    GLFWwindow* window;
+    std::cout << extensionCount << " extensions supported\n";
 
-    /* Initialize the library */
-    if (!glfwInit())
-        return -1;
+    glm::mat4 matrix;
+    glm::vec4 vec;
+    auto test = matrix * vec;
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-    if (glewInit() != GLEW_OK)
-        std::cout << "GLEW is not OK" << std::endl;
-    
-    std::cout << glGetString(GL_VERSION) << std::endl;
-
-
-    float vertices[6] = {
-        0.5f, 0.5f,
-        0.5f, -0.5f,
-        -0.5f, -0.5f
-    };
-
-
-    unsigned int buf;
-    glGenBuffers(1, &buf);
-    glBindBuffer(GL_ARRAY_BUFFER, buf);
-    glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-    glEnableVertexAttribArray(0);
-
-
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
 
+    glfwDestroyWindow(window);
+
     glfwTerminate();
+
     return 0;
 }
