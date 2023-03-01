@@ -150,6 +150,7 @@
     <ClCompile Include="src\ray_tracing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ray.h" />
     <ClInclude Include="src\vec3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
