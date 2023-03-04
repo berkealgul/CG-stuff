@@ -1,20 +1,17 @@
 #ifndef RAY_H
 #define RAY_H
 
-template <typename T>
+#include "vec3.h"
+
 class Ray
 {
 public:
-	Ray(Vec3)
+	Ray() {}
 
 
 private:
-	Vec3<T> origin;
-	Vec3<T> direction;
-
-
-
-
+	Vec3 origin;
+	Vec3 direction;
 };
 
 

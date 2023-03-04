@@ -30,7 +30,7 @@ int main()
         }
     }
 
-    Vec3<float> v(1, 2, 3);
+    Vec3 v(1, 2, 3);
 
     //std::cerr << v;
         
