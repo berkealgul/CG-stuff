@@ -150,6 +150,7 @@
     <ClCompile Include="src\ray_tracing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\color.h" />
     <ClInclude Include="src\ray.h" />
     <ClInclude Include="src\vec3.h" />
   </ItemGroup>
