@@ -23,5 +23,11 @@
     <ClInclude Include="src\olcPixelGameEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\RayCastWorld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MapEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

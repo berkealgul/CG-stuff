@@ -146,7 +146,9 @@
     <ClCompile Include="src\ray_caster.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\MapEditor.h" />
     <ClInclude Include="src\olcPixelGameEngine.h" />
+    <ClInclude Include="src\RayCastWorld.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
