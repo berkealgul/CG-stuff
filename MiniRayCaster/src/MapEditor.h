@@ -1,6 +1,9 @@
 #include "olcPixelGameEngine.h"
 #include <vector>  
 
+using namespace olc;
+
+
 class MapEditor : public olc::PixelGameEngine
 {
 public:
@@ -32,9 +35,10 @@ public:
 		UpdateGrid();
 
 		olc::vf2d pos = { (float)w / 2, (float)h / 2 };
-		olc::vf2d dir = (GetMousePos() - pos).norm();
+		olc::vf2d scale = { (float)grid_w, float(grid_h) };
+		olc::vf2d dir = (olc::vf2d(GetMouseX(), GetMouseY()) - (pos * scale)).norm();
 
-		auto checkpoints = RunDDA(pos, dir);
+ 		auto checkpoints = RunDDA(pos, dir);
 
 		//std::vector<olc::vf2d>checkpoints;
 		//checkpoints.push_back(pos);
@@ -50,7 +54,7 @@ public:
 		DrawLine(checkpoints[0], checkpoints[checkpoints.size() - 1]);
 		for (auto v : checkpoints)
 		{
-			FillCircle(v, 1);
+			FillCircle(v, 1, olc::RED);
 		}
 	}
 
@@ -94,18 +98,18 @@ public:
 	std::vector<olc::vf2d> RunDDA(olc::vf2d pos, olc::vf2d dir)
 	{
 		float distance = 0;
-		float max_distance = 100;
+		float max_distance = 10;
 
 		bool hit = false;
 
-		olc::vf2d RayUnitDistance = { sqrt(1 + dir.x / dir.y), sqrt(1 + dir.y / dir.x) };
+		olc::vf2d RayUnitDistance = { sqrt(1 + (dir.y / dir.x) * (dir.y / dir.x)), sqrt(1 + (dir.x / dir.y) * (dir.x / dir.y)) };
 		olc::vf2d RayTravelDistance;
 		olc::vi2d MapCheck(pos);
 		olc::vf2d step;
 
-		std::vector<olc::vf2d> Checkpoints;
+		olc::vf2d scale = { (float)grid_w, float(grid_h) };
 
-		Checkpoints.push_back(olc::vf2d(MapCheck));
+		std::vector<olc::vf2d> Checkpoints;
 
 		if (dir.x < 0)
 		{
@@ -125,11 +129,11 @@ public:
 			step.y = 1;
 		}
 
-		Checkpoints.push_back(olc::vf2d(MapCheck));
+		Checkpoints.push_back(olc::vf2d(MapCheck.x * grid_w, MapCheck.y * grid_h));
 
 		while (distance < max_distance && !hit)
 		{
-			if (RayTravelDistance.x < RayTravelDistance.y)
+			if (RayTravelDistance.x <= RayTravelDistance.y)
 			{
 				MapCheck.x += step.x;
 				distance = RayTravelDistance.x;
@@ -142,7 +146,12 @@ public:
 				RayTravelDistance.y += RayUnitDistance.y;
 			}
 
-			Checkpoints.push_back(olc::vf2d(MapCheck));
+			Checkpoints.push_back(olc::vf2d(MapCheck.x * grid_w, MapCheck.y * grid_h));
+
+			if (MapCheck.x < 0 || MapCheck.x > w - 1 || MapCheck.y < 0 || MapCheck.y > h - 1)
+			{
+				break;
+			}
 
 			if (field[MapCheck.x][MapCheck.y] != 0)
 			{
