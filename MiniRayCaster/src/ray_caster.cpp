@@ -10,7 +10,7 @@ int main()
 	//	editor.Start();
 
 	RayCastWorld editor;
-	if (editor.Construct(640, 480, 1, 1))
+	if (editor.Construct(1080, 720, 1, 1))
 		editor.Start();
 
 	return 0;

@@ -2,6 +2,17 @@
 #include <iostream>
 #include <vector>  
 
+using namespace olc;
+
+/*
+* Berke Algül 13.03.2023
+* 
+* Controls:
+*  W-S : move forward-nackward
+*  A-D : rotate
+*  Q-E : adjust FOV
+*/
+
 
 struct DDA_Result
 {
@@ -15,9 +26,10 @@ class RayCastWorld : public olc::PixelGameEngine
 {
 public:
 	const float player_movement_speed = 5.0f;
-	const float player_rotation_speed = 5.0f;
+	const float player_rotation_speed = 2.0f;
 
-	float fov = 3.1415 / 4; 
+	float fov = 1.7; 
+	const float fov_speed = 0.1;
 
 	vf2d player_pos;
 	vf2d player_dir = { -1, 0 };
@@ -27,6 +39,8 @@ public:
 
 	//std::vector<std::vector<int>> field;
 	//vi2d field_size = { 20, 20 };
+
+	vf2d grid_scale;
 
 	vi2d field_size = { 24, 24 };
 	int field[24][24] =
@@ -60,13 +74,16 @@ public:
 	bool OnUserCreate() override
 	{
 		player_pos = field_size / 2;
+		grid_scale = { float(ScreenWidth()) / field_size.x, float(ScreenHeight()) / field_size.y };
 		return true;
 	}
 
 	bool OnUserUpdate(float dt) override
 	{
 		Render();
+		//RenderMap();
 		UpdatePlayer(dt);
+
 		return true;
 	}
 
@@ -74,38 +91,60 @@ public:
 	{
 		if (GetKey(olc::Key::W).bHeld) 
 		{
-			if (field[int(player_pos.x + player_movement_speed * dt)][int(player_pos.y)] == 0)
+			if (field[int(player_pos.x + player_dir.x * player_movement_speed * dt)][int(player_pos.y)] == 0)
 			{
-				player_pos.x += player_movement_speed * dt;
+				player_pos.x += player_dir.x * player_movement_speed * dt;
 			}
-			if (field[int(player_pos.x)][int(player_pos.y + player_movement_speed * dt)] == 0)
+			if (field[int(player_pos.x)][int(player_pos.y + player_dir.y * player_movement_speed * dt)] == 0)
 			{
-				player_pos.y += player_movement_speed * dt;
+				player_pos.y += player_dir.y * player_movement_speed * dt;
 			}
 		} 
-
 		if (GetKey(olc::Key::S).bHeld)
 		{
-			if (field[int(player_pos.x - player_movement_speed * dt)][int(player_pos.y)] == 0)
+			if (field[int(player_pos.x - player_dir.x * player_movement_speed * dt)][int(player_pos.y)] == 0)
 			{
-				player_pos.x -= player_movement_speed * dt;
+				player_pos.x -= player_dir.x * player_movement_speed * dt;
 			}
-			if (field[int(player_pos.x)][int(player_pos.y - player_movement_speed * dt)] == 0)
+			if (field[int(player_pos.x)][int(player_pos.y - player_dir.y * player_movement_speed * dt)] == 0)
 			{
-				player_pos.y -= player_movement_speed * dt;
+				player_pos.y -= player_dir.y * player_movement_speed * dt;
 			}
 		}
 		
-		if (GetKey(olc::Key::Q).bHeld)
+		if (GetKey(olc::Key::D).bHeld)
 		{
 			plane      = RotateVector(-player_rotation_speed * dt, plane);
 			player_dir = RotateVector(-player_rotation_speed * dt, player_dir);
 		}
-
-		if (GetKey(olc::Key::E).bHeld)
+		if (GetKey(olc::Key::A).bHeld)
 		{
 			plane	   = RotateVector(player_rotation_speed * dt, plane);
 			player_dir = RotateVector(player_rotation_speed * dt, player_dir);
+		}
+
+		if (GetKey(olc::Key::E).bHeld)
+		{
+			fov += fov_speed * dt;
+		}
+		if (GetKey(olc::Key::Q).bHeld)
+		{
+			fov -= fov_speed * dt;
+		}
+	}
+
+	void RenderMap()
+	{
+		DrawGrid();
+
+		for (int i = 0; i < ScreenWidth(); i++)
+		{
+			float x = ((2 * i) / float(ScreenWidth())) - 1;
+			auto ray_dir = player_dir / tan(fov / 2) + plane * x;
+
+			DDA_Result result = RunDDA(ray_dir);
+
+			DrawDDARay(ray_dir, result.distance);
 		}
 	}
 
@@ -115,17 +154,40 @@ public:
 
 		for (int i = 0; i < ScreenWidth(); i++)
 		{
-			float x = ((2 * i) / ScreenWidth()) - 1;
-			auto ray_dir = player_dir + plane * x;
+			auto player_dir_scaled = player_dir / tan(fov / 2);
+			float x = ((2 * i) / float(ScreenWidth())) - 1;
+			auto ray_dir = player_dir_scaled + plane * x;
 
 			DDA_Result result = RunDDA(ray_dir);
-			float h = ScreenHeight()*2 / result.distance;
+			
+			float p_dist = (result.distance / ray_dir.mag() - 1) * player_dir_scaled.mag();
 
+			float h = (ScreenHeight()*2) / p_dist;
 			Pixel p = GetColorOfCell(result.hit_cell, result.side);
 
 			FillRect(i, ScreenHeight() / 2 - h / 2, 1, h, p);
-			//DrawLine(0, ScreenHeight() / 2, ScreenWidth(), ScreenHeight() / 2, olc::RED);
 		}
+	}
+
+	void DrawGrid()
+	{
+		for (int i = 0; i < field_size.x; i++)
+		{
+			for (int j = 0; j < field_size.y; j++)
+			{
+				Pixel p = GetColorOfCell(vi2d(i, j), 0);
+
+				FillRect(i * grid_scale.x, j * grid_scale.y, grid_scale.x, grid_scale.y, p);
+				DrawRect(i * grid_scale.x, j * grid_scale.y, grid_scale.x, grid_scale.y, olc::BLACK);
+			}
+		}
+	}
+
+	void DrawDDARay(vf2d dir, float dis)
+	{
+		DrawLine(player_pos*grid_scale, (player_pos + dir * dis) * grid_scale, BLACK);
+		FillCircle(player_pos * grid_scale, 4, olc::RED);
+		FillCircle((player_pos + dir * dis) * grid_scale, 4, olc::RED);
 	}
 
 	vf2d RotateVector(float angle, vf2d v)
@@ -146,6 +208,7 @@ public:
 			case 2:  p = GREEN;  break; //green
 			case 3:  p = BLUE;   break; //blue
 			case 4:  p = WHITE;  break; //white
+			case 0:  p = GREY;  break; //white
 			default: p = YELLOW; break; //yellow
 		}
 
@@ -218,14 +281,10 @@ public:
 		}
 
 		DDA_Result result;
-
-		// get rid of fisheye effect
-		if (side == 0) { result.distance = (RayTravelDistance.x - RayUnitDistance.x); }
-		else		   { result.distance = (RayTravelDistance.y - RayUnitDistance.y); }
-
-		//result.distance = distance; 
+		result.distance = distance; 
 		result.hit_cell = MapCheck;
 		result.side = side;
+
 		return result;
 	}
 };
