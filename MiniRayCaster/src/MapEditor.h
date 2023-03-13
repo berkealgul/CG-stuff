@@ -10,8 +10,14 @@ public:
 	const int w = 20;
 	const int h = 20;
 
-	int grid_w;
-	int grid_h;
+
+	const float cell_edit_timeout = 0.5f;
+	const float player_speed = 10.0f;
+
+	float time_since_last_cell_edit = 0;
+
+	vi2d grid_scale;
+	vf2d player_pos;
 
 	int last_edited_cell_i = -1;
 	int last_edited_cell_j = -1;
@@ -22,27 +28,26 @@ public:
 	bool OnUserCreate() override
 	{
 		field = std::vector<std::vector<int>>(w, std::vector<int>(h));
-		grid_w = ScreenWidth() / w;
-		grid_h = ScreenHeight() / h;
+		grid_scale.x = ScreenWidth() / w;
+		grid_scale.y = ScreenHeight() / h;
+		player_pos.x = (float)w / 2;
+		player_pos.y = (float)h / 2;
+
 		return true;
 	}
 
 	bool OnUserUpdate(float dt) override
 	{
-		//Clear(olc::DARK_BLUE);
-
 		DrawGrid();
-		UpdateGrid();
+		UpdateGrid(dt);
+		UpdatePlayer(dt);
 
-		olc::vf2d pos = { (float)w / 2, (float)h / 2 };
-		olc::vf2d scale = { (float)grid_w, float(grid_h) };
-		olc::vf2d dir = (olc::vf2d(GetMouseX(), GetMouseY()) - (pos * scale)).norm();
+		olc::vf2d dir = (olc::vf2d(GetMouseX(), GetMouseY()) - (player_pos * grid_scale)).norm();
 
- 		auto checkpoints = RunDDA(pos, dir);
+		std::vector<vf2d> checkpoints;
+ 		float distance = RunDDA(dir, checkpoints);
 
-		//std::vector<olc::vf2d>checkpoints;
-		//checkpoints.push_back(pos);
-		//checkpoints.push_back(GetMousePos());
+		std::cout << distance << std::endl;
 
 		DrawDDARay(checkpoints);
 
@@ -52,24 +57,44 @@ public:
 	void DrawDDARay(std::vector<olc::vf2d> checkpoints)
 	{
 		DrawLine(checkpoints[0], checkpoints[checkpoints.size() - 1]);
-		for (auto v : checkpoints)
-		{
-			FillCircle(v, 1, olc::RED);
-		}
+		FillCircle(checkpoints[0], 1, olc::RED);
+		FillCircle(checkpoints[checkpoints.size() - 1], 1, olc::RED);
+		//for (int i = 0; i < checkpoints.size(); i++)
+		//{
+		//	FillCircle(checkpoints[i], 1, olc::RED);
+		//	//FillRect(checkpoints[i].x, checkpoints[i].y, grid_scale.x, grid_scale.y, olc::GREEN);
+		//}
 	}
 
-	void UpdateGrid()
+	void UpdatePlayer(float dt)
 	{
-		if (GetMouse(0).bHeld)
-		{
-			int i = GetMouseX() / grid_w;
-			int j = GetMouseY() / grid_h;
+		if (GetKey(olc::Key::W).bHeld) player_pos.y -= player_speed * dt;
+		if (GetKey(olc::Key::S).bHeld) player_pos.y += player_speed * dt;
+		if (GetKey(olc::Key::D).bHeld) player_pos.x += player_speed * dt;
+		if (GetKey(olc::Key::A).bHeld) player_pos.x -= player_speed * dt;
+	}
 
-			if (i == last_edited_cell_i && j == last_edited_cell_j) { return; }
+	void UpdateGrid(float dt)
+	{
+		if (GetKey(olc::Key::R).bPressed)
+		{
+			field = std::vector<std::vector<int>>(w, std::vector<int>(h)); // restart map
+		} 
+
+		time_since_last_cell_edit += dt;
+
+		if (GetMouse(0).bHeld )
+		{
+			int i = GetMouseX() / grid_scale.x;
+			int j = GetMouseY() / grid_scale.y;
+
+			if ((i == last_edited_cell_i && j == last_edited_cell_j) && time_since_last_cell_edit < cell_edit_timeout) { return; }
 
 			field[i][j] = field[i][j] == 1 ? 0 : 1;
 			last_edited_cell_i = i;
 			last_edited_cell_j = j;
+
+			time_since_last_cell_edit = 0;
 		}
 	}
 
@@ -89,77 +114,79 @@ public:
 				{
 					p = olc::DARK_RED;
 				}
-				FillRect(i * grid_w, j * grid_h, grid_w, grid_h, p);
-				DrawRect(i * grid_w, j * grid_h, grid_w, grid_h, olc::YELLOW);
+				FillRect(i * grid_scale.x, j * grid_scale.y, grid_scale.x, grid_scale.y, p);
+				DrawRect(i * grid_scale.x, j * grid_scale.y, grid_scale.x, grid_scale.y, olc::YELLOW);
 			}
 		}
 	}
 
-	std::vector<olc::vf2d> RunDDA(olc::vf2d pos, olc::vf2d dir)
+	float RunDDA(olc::vf2d dir, std::vector<vf2d>& Checkpoints)
 	{
 		float distance = 0;
-		float max_distance = 10;
+		float max_distance = 100;
 
 		bool hit = false;
 
 		olc::vf2d RayUnitDistance = { sqrt(1 + (dir.y / dir.x) * (dir.y / dir.x)), sqrt(1 + (dir.x / dir.y) * (dir.x / dir.y)) };
 		olc::vf2d RayTravelDistance;
-		olc::vi2d MapCheck(pos);
-		olc::vf2d step;
+		olc::vi2d MapCheck(player_pos);
+		olc::vf2d Step;
 
-		olc::vf2d scale = { (float)grid_w, float(grid_h) };
-
-		std::vector<olc::vf2d> Checkpoints;
+		Checkpoints.push_back(player_pos * grid_scale);
 
 		if (dir.x < 0)
 		{
-			step.x = -1;
+			Step.x = -1;
+			RayTravelDistance.x = (player_pos.x - float(MapCheck.x)) * RayUnitDistance.x;
 		}
 		else
 		{
-			step.x = 1;
+			Step.x = 1;
+			RayTravelDistance.x = (float(MapCheck.x + 1) - player_pos.x) * RayUnitDistance.x;
 		}
 
 		if (dir.y < 0)
 		{
-			step.y = -1;
+			Step.y = -1;
+			RayTravelDistance.y = (player_pos.y - float(MapCheck.y)) * RayUnitDistance.y;
 		}
 		else
 		{
-			step.y = 1;
+			Step.y = 1;
+			RayTravelDistance.y = (float(MapCheck.y + 1) - player_pos.y) * RayUnitDistance.y;
 		}
-
-		Checkpoints.push_back(olc::vf2d(MapCheck.x * grid_w, MapCheck.y * grid_h));
 
 		while (distance < max_distance && !hit)
 		{
 			if (RayTravelDistance.x <= RayTravelDistance.y)
 			{
-				MapCheck.x += step.x;
+				MapCheck.x += Step.x;
 				distance = RayTravelDistance.x;
 				RayTravelDistance.x += RayUnitDistance.x;
 			}
 			else
 			{
-				MapCheck.y += step.y;
+				MapCheck.y += Step.y;
 				distance = RayTravelDistance.y;
 				RayTravelDistance.y += RayUnitDistance.y;
 			}
 
-			Checkpoints.push_back(olc::vf2d(MapCheck.x * grid_w, MapCheck.y * grid_h));
+			Checkpoints.push_back(MapCheck * grid_scale);
 
 			if (MapCheck.x < 0 || MapCheck.x > w - 1 || MapCheck.y < 0 || MapCheck.y > h - 1)
 			{
 				break;
 			}
 
-			if (field[MapCheck.x][MapCheck.y] != 0)
+			if (field[(int)MapCheck.x][(int)MapCheck.y] != 0)
 			{
 				hit = true;
 			}
 		}
 
-		return Checkpoints;
+		Checkpoints.push_back((player_pos + dir * distance) * grid_scale);
+
+		return distance;
 	}
 
 };
