@@ -5,6 +5,7 @@
 #include "hittableList.h"
 #include "Sphere.h"
 #include "Hittable.h"
+#include "Camera.h"
 
 #include <iostream>
 
@@ -49,23 +50,15 @@ int main()
     const int image_height = 400;
     const int image_width = static_cast<int>(image_height * aspect_ratio);
 
+    const int sample_per_pixel = 100;
+
     // World
     HittableList world;
     world.add(make_shared<Sphere>(Point3(0, 0, -1), 0.5));
     world.add(make_shared<Sphere>(Point3(0, -100.5, -1), 100));
 
-
     // Camera
-    double focal_length = 1.0;
-
-    double viewport_height = 2.0;
-    double viewport_width = viewport_height * aspect_ratio;
-
-    Vec3 horizontal(viewport_width, 0, 0);
-    Vec3 vertical(0, viewport_height, 0);
-    Vec3 origin(0, 0, 0);
-
-    Vec3 upper_left_corner = vertical / 2 - horizontal / 2 - Vec3(0, 0, focal_length);
+    Camera cam;
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -74,12 +67,17 @@ int main()
     {
         for (int i = 0; i < image_width; ++i)
         {
-            double u = double(i) / (image_width - 1);
-            double v = double(j) / (image_height - 1);
-            Vec3 direction = upper_left_corner + horizontal * u - vertical * v;
-            Ray r(origin, direction);
-            Color c = ray_color(r, world);
-            write_color(std::cout, c);
+            Color c(0, 0, 0);
+
+            for (int s = 0; s < sample_per_pixel; s++)
+            {
+                double u = double(i + random_double()) / (image_width - 1);
+                double v = double(j + random_double()) / (image_height - 1);
+                Ray r = cam.get_ray(u, v);
+                c = c + ray_color(r, world);
+            }
+
+            write_color(std::cout, c,  sample_per_pixel);
         }
     }
         

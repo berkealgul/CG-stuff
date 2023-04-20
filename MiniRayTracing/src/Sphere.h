@@ -6,6 +6,7 @@
 
 class Sphere : public Hittable
 {
+public:
 	Sphere() {}
 	Sphere(Point3 c, double r) :
 		center(c),
