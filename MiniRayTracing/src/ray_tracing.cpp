@@ -1,8 +1,13 @@
 #include "color.h"
 #include "vec3.h"
 #include "ray.h"
+#include "utils.h"
+#include "hittableList.h"
+#include "Sphere.h"
+#include "Hittable.h"
 
 #include <iostream>
+
 
 double hit_sphere(const Point3& center, double radius, const Ray& r) 
 {
@@ -22,16 +27,17 @@ double hit_sphere(const Point3& center, double radius, const Ray& r)
     }
 }
 
-Color ray_color(const Ray& r)
+Color ray_color(const Ray& r, Hittable& world)
 {
-    double t = hit_sphere(Point3(0, 0, -1), 0.5, r);
-    if (t > 0)
+    HitResult res;
+
+    if (world.hit(r, 0, infinity, res)) 
     {
-        Vec3 N = unit_vector(r.at(t) - Vec3(0, 0, -1));
-        return 0.5 * (N + 1);
+        return 0.5 * (res.normal + Color(1, 1, 1));
     }
+
     Vec3 unit_direction = unit_vector(r.direction());
-    t = 0.5 * (unit_direction.y() + 1.0);
+    auto t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
@@ -42,6 +48,12 @@ int main()
     double aspect_ratio = 16.0 / 9.0;
     const int image_height = 400;
     const int image_width = static_cast<int>(image_height * aspect_ratio);
+
+    // World
+    HittableList world;
+    world.add(make_shared<Sphere>(Point3(0, 0, -1), 0.5));
+    world.add(make_shared<Sphere>(Point3(0, -100.5, -1), 100));
+
 
     // Camera
     double focal_length = 1.0;
@@ -66,7 +78,7 @@ int main()
             double v = double(j) / (image_height - 1);
             Vec3 direction = upper_left_corner + horizontal * u - vertical * v;
             Ray r(origin, direction);
-            Color c = ray_color(r);
+            Color c = ray_color(r, world);
             write_color(std::cout, c);
         }
     }
