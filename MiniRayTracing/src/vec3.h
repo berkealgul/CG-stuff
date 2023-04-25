@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cmath>
+#include "utils.h"
 
 class Vec3
 {
@@ -50,6 +51,16 @@ public:
 	inline double x() const { return e[0]; }
 	inline double y() const { return e[1]; }
 	inline double z() const { return e[2]; }
+
+	inline static Vec3 random()
+	{
+		return Vec3(random_double(), random_double(), random_double());
+	}
+
+	inline static Vec3 random(double min, double max)
+	{
+		return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+	}
 
 private:
 	double e[3];
@@ -112,8 +123,28 @@ inline Vec3 cross(const Vec3& u, const Vec3& v)
 		u[0] * v[1] - u[1] * v[0]);
 }
 
-inline Vec3 unit_vector(Vec3 v) {
+inline Vec3 unit_vector(Vec3 v) 
+{
 	return v / v.length();
+}
+
+Vec3 random_in_unit_sphere() 
+{
+	while (true)
+	{
+		auto p = Vec3::random(-1, 1);
+		if (p.length_squared() >= 1) continue;
+		return p;
+	}
+}
+
+Vec3 random_in_hemisphere(const Vec3& normal) 
+{
+	Vec3 in_unit_sphere = random_in_unit_sphere();
+	if (dot(in_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
+		return in_unit_sphere;
+	else
+		return -1 * in_unit_sphere;
 }
 
 #endif // VEC3_H
