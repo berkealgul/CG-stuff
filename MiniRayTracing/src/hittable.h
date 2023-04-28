@@ -4,10 +4,14 @@
 #include "ray.h"
 #include "vec3.h"
 
+
+class Material;
+
 struct HitResult
 {
     Point3 p;
     Vec3 normal;
+    shared_ptr<Material> mat_ptr;
     double t;
 
     bool front_face;
@@ -23,9 +27,6 @@ class Hittable
 {
 public:
     virtual bool hit(const Ray& r, double t_min, double t_max, HitResult& rec) const = 0;
-
-
-
 };
 
 #endif // HITTABLE_H
