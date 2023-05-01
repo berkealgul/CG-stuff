@@ -3,14 +3,17 @@
 
 #include "hittable.h"
 #include "vec3.h"
+#include "material.h"
 
 class Sphere : public Hittable
 {
+public:
 	Sphere() {}
-	Sphere(Point3 c, double r) :
+	Sphere(Point3 c, double r, shared_ptr<Material> m) :
 		center(c),
-		radius(r)
-	{}
+		radius(r),
+		mat_ptr(m)
+	{};
 
 	virtual bool hit(const Ray& r, double t_min, double t_max, HitResult& res) const override
 	{
@@ -39,7 +42,9 @@ class Sphere : public Hittable
 
 		res.t = root;
 		res.p = r.at(root);
-		res.normal = (res.p - center) / radius;
+		Vec3 outward_normal = (res.p - center) / radius;
+		res.set_face_normal(r, outward_normal);
+		res.mat_ptr = mat_ptr;
 
 		return true;
 	}
@@ -47,6 +52,7 @@ class Sphere : public Hittable
 private:
 	Point3 center;
 	double radius;
+	shared_ptr<Material> mat_ptr;
 };
 
 #endif // SPHERE_H
