@@ -7,6 +7,7 @@
 #include "Sphere.h"
 #include "Hittable.h"
 #include "Camera.h"
+#include "movingSphere.h"
 
 #include <iostream>
 
@@ -34,7 +35,10 @@ HittableList random_scene()
                     // diffuse
                     auto albedo = Color::random() * Color::random();
                     sphere_material = make_shared<Lambertian>(albedo);
-                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                    auto center2 = center + Vec3(0, random_double(0, .5), 0);
+                    world.add(make_shared<MovingSphere>(
+                        center, center2, 0.0, 1.0, 0.2, sphere_material));
+                    //world.add(make_shared<Sphere>(center, 0.2, sphere_material));
                 }
                 else if (choose_mat < 0.95) 
                 {
@@ -109,11 +113,11 @@ Color ray_color(const Ray& r, Hittable& world, int depth)
 
 int main()
 {
-    const auto aspect_ratio = 3.0 / 2.0;
-    const int image_width = 1200;
+    const auto aspect_ratio = 16.0 / 9.0;
+    const int image_width = 400;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 10;
-    const int max_depth = 5;
+    const int samples_per_pixel = 20;
+    const int max_depth = 10;
 
 
     // World
@@ -126,7 +130,7 @@ int main()
     auto dist_to_focus = 10.0;
     auto aperture = 0.1;
 
-    Camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus);
+    Camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
