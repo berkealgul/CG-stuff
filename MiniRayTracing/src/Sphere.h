@@ -49,6 +49,13 @@ public:
 		return true;
 	}
 
+	virtual bool bounding_box(double time0, double time1, AABB& output_box) const override
+	{
+		Vec3 offset(radius, radius, radius);
+		output_box = AABB(center - offset, center + offset);
+		return true;
+	}
+
 private:
 	Point3 center;
 	double radius;

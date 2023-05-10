@@ -50,5 +50,11 @@
     <ClInclude Include="src\movingSphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\aabb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bvhNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

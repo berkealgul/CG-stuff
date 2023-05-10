@@ -8,6 +8,7 @@
 #include "Hittable.h"
 #include "Camera.h"
 #include "movingSphere.h"
+#include "bvhNode.h"
 
 #include <iostream>
 
@@ -126,7 +127,7 @@ int main()
     // Camera
     Point3 lookfrom(13, 2, 3);
     Point3 lookat(0, 0, 0);
-    Vec3 vup(0, 1, 0);
+    Vec3 vup(0, 1, 0); 
     auto dist_to_focus = 10.0;
     auto aperture = 0.1;
 
