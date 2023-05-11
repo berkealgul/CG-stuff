@@ -14,6 +14,8 @@ struct HitResult
     Vec3 normal;
     shared_ptr<Material> mat_ptr;
     double t;
+    double u;
+    double v;
 
     bool front_face;
 
