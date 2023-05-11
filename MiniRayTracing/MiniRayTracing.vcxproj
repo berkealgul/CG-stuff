@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\ray_tracing.cpp" />
+    <ClCompile Include="src\stb_image_inc.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\aabb.h" />
@@ -160,9 +161,13 @@
     <ClInclude Include="src\material.h" />
     <ClInclude Include="src\ray.h" />
     <ClInclude Include="src\Sphere.h" />
+    <ClInclude Include="src\stb_image.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\utils.h" />
     <ClInclude Include="src\vec3.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="earth_map.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

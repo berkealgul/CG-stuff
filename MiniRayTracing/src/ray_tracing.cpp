@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image_inc.h"
 #include "color.h"
 #include "vec3.h"
 #include "ray.h"
@@ -12,6 +14,16 @@
 #include "texture.h"
 
 #include <iostream>
+
+
+HittableList earth() 
+{
+    auto earth_texture = make_shared<ImageTexture>("earth_map.jpg");
+    auto earth_surface = make_shared<Lambertian>(earth_texture);
+    auto globe = make_shared<Sphere>(Point3(0, 0, 0), 2, earth_surface);
+
+    return HittableList(globe);
+}
 
 
 HittableList random_scene() 
@@ -124,7 +136,7 @@ int main()
 
 
     // World
-    HittableList world = random_scene();
+    HittableList world = earth();
 
     // Camera
     Point3 lookfrom(13, 2, 3);
