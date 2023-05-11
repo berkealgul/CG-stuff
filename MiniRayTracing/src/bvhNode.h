@@ -23,11 +23,7 @@ public:
 	{
         auto objects = src_objects; // Create a modifiable array of the source scene objects
 
-        int axis = random_int(0, 2);
-
-        auto comparator = (axis == 0) ? box_x_compare
-                        : (axis == 1) ? box_y_compare
-                                      : box_z_compare;
+        comparator_axis = random_int(0, 2);
 
         size_t object_span = end - start;
 
@@ -37,7 +33,7 @@ public:
         }
         else if (object_span == 2) 
         {
-            if (comparator(objects[start], objects[start + 1])) 
+            if (compare(objects[start], objects[start + 1]))
             {
                 left = objects[start];
                 right = objects[start + 1];
@@ -50,7 +46,13 @@ public:
         }
         else 
         {
-            std::sort(objects.begin() + start, objects.begin() + end, comparator);
+            std::sort(objects.begin() + start, objects.begin() + end, 
+                [this](const shared_ptr<Hittable> a, const shared_ptr<Hittable> b)
+                {
+                    return (comparator_axis == 0) ? box_x_compare(a, b)
+                        : (comparator_axis == 1) ? box_y_compare(a, b)
+                        : box_z_compare(a, b);
+                });
 
             auto mid = start + object_span / 2;
             left = make_shared<BVHNode>(objects, start, mid, time0, time1);
@@ -76,6 +78,13 @@ public:
 		return hit_left || hit_right;
 	}
 
+    bool compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b)
+    {
+        return (comparator_axis == 0) ? box_x_compare(a, b)
+            : (comparator_axis == 1) ? box_y_compare(a, b)
+            : box_z_compare(a, b);
+    }
+
     inline bool box_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b, int axis) 
     {
         AABB box_a;
@@ -86,7 +95,6 @@ public:
 
         return box_a.min()[axis] < box_b.min()[axis];
     }
-
 
     bool box_x_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b) 
     {
@@ -113,6 +121,7 @@ public:
 	shared_ptr<Hittable> left;
 	shared_ptr<Hittable> right;
 	AABB box;
+    int comparator_axis;
 };
 
 
