@@ -103,7 +103,7 @@ double hit_sphere(const Point3& center, double radius, const Ray& r)
     }
 }
 
-Color ray_color(const Ray& r, Hittable& world, int depth)
+Color ray_color(const Ray& r, Hittable& world, int depth, const Color& background = Color(0, 0, 0))
 {
     HitResult res;
 
@@ -113,11 +113,12 @@ Color ray_color(const Ray& r, Hittable& world, int depth)
     {
         Ray scattered;
         Color attenuation;
+        Color emitted = res.mat_ptr->emitted(res.u, res.v, res.p);
 
         if (res.mat_ptr->scatter(r, res, attenuation, scattered))
-            return attenuation * ray_color(scattered, world, depth - 1);
+            return emitted + attenuation * ray_color(scattered, world, depth - 1, background);
         else
-            return Color(0, 0, 0);
+            return emitted;
     }
 
     Vec3 unit_direction = unit_vector(r.direction());
@@ -135,8 +136,9 @@ int main()
     const int max_depth = 10;
 
 
-    // World
-    HittableList world = earth();
+    // World: random_scene(), earth()
+    HittableList world = random_scene();
+    Color background(0, 0, 0);
 
     // Camera
     Point3 lookfrom(13, 2, 3);
@@ -161,7 +163,7 @@ int main()
                 double u = double(i + random_double()) / (image_width - 1);
                 double v = double(j + random_double()) / (image_height - 1);
                 Ray r = cam.get_ray(u, v);
-                c = c + ray_color(r, world, max_depth);
+                c = c + ray_color(r, world, max_depth, background);
             }
 
             //std::cerr << i << " " << j << std::endl;
