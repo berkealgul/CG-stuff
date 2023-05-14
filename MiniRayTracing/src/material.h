@@ -4,6 +4,7 @@
 #define MATERIAL_H
 
 #include "utils.h"
+#include "texture.h"
 
 struct HitResult;
 
@@ -13,13 +14,19 @@ public:
 	virtual bool scatter(
 		const Ray& ray_in, const HitResult& res, Color& attenuation, Ray& scattered
 	) const = 0;
+
+	virtual Color emitted(double u, double v, const Point3& p) const
+	{
+		return Color(0, 0, 0);
+	}
 };
 
 
 class Lambertian : public Material
 {
 public:
-	Lambertian(const Color& a) : albedo(a) {}
+	Lambertian(const Color& a) : albedo(make_shared<SolidColor>(a)) {}
+	Lambertian(shared_ptr<Texture> a) : albedo(a) {}
 
 	virtual bool scatter(
 		const Ray& ray_in, const HitResult& res, Color& attenuation, Ray& scattered
@@ -30,13 +37,13 @@ public:
 		if (scatter_direction.near_zero())
 			scatter_direction = res.normal;
 
-		scattered = Ray(res.p, scatter_direction);
-		attenuation = albedo;
+		scattered = Ray(res.p, scatter_direction, ray_in.time());
+		attenuation = albedo->value(res.u, res.v, res.p);
 		return true;
 	}
 
 public:
-	Color albedo; 
+	shared_ptr<Texture> albedo; 
 };
 
 
@@ -50,7 +57,7 @@ public:
 	) const override
 	{
 		Vec3 reflected = reflect(unit_vector(ray_in.direction()), res.normal);
-		scattered = Ray(res.p, reflected + fuzz * random_in_unit_sphere());
+		scattered = Ray(res.p, reflected + fuzz * random_in_unit_sphere(), ray_in.time());
 		attenuation = albedo;
 		return (dot(scattered.direction(), res.normal) > 0);
 	}
@@ -86,7 +93,7 @@ public:
 		else
 			direction = refract(unit_direction, res.normal, refraction_ratio);
 
-		scattered = Ray(res.p, direction);
+		scattered = Ray(res.p, direction, ray_in.time());
 		return true;
 	}
 
@@ -101,6 +108,29 @@ private:
 		r0 = r0 * r0;
 		return r0 + (1 - r0) * pow((1 - cosine), 5);
 	}
+};
+
+
+class DiffuseLight : public Material
+{
+public:
+	DiffuseLight(shared_ptr<Texture> a) : emit(a) {}
+	DiffuseLight(Color c) : emit(make_shared<SolidColor>(c)) {}
+
+	virtual bool scatter(
+		const Ray& ray_in, const HitResult& res, Color& attenuation, Ray& scattered
+	) const override
+	{
+		return false;
+	}
+
+	virtual Color emitted(double u, double v, const Point3& p) const override
+	{
+		return emit->value(u, v, p);
+	}
+
+public:
+	shared_ptr<Texture> emit;
 };
 
 

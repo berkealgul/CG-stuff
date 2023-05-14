@@ -44,9 +44,26 @@ public:
 		res.p = r.at(root);
 		Vec3 outward_normal = (res.p - center) / radius;
 		res.set_face_normal(r, outward_normal);
+		get_sphere_uv(outward_normal, res.u, res.v);
 		res.mat_ptr = mat_ptr;
 
 		return true;
+	}
+
+	virtual bool bounding_box(double time0, double time1, AABB& output_box) const override
+	{
+		Vec3 offset(radius, radius, radius);
+		output_box = AABB(center - offset, center + offset);
+		return true;
+	}
+
+	static void get_sphere_uv(const Point3& p, double& u, double& v) 
+	{
+		auto theta = acos(-p.y());
+		auto phi = atan2(-p.z(), p.x()) + pi;
+
+		u = phi / (2 * pi);
+		v = theta / pi;
 	}
 
 private:
