@@ -12,9 +12,44 @@
 #include "movingSphere.h"
 #include "bvhNode.h"
 #include "texture.h"
+#include "aarect.h"
 
 #include <iostream>
 
+
+HittableList cornell_box()
+{
+    HittableList objects;
+
+    auto red = make_shared<Lambertian>(Color(.65, .05, .05));
+    auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+    auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+    auto light = make_shared<DiffuseLight>(Color(15, 15, 15));
+
+    objects.add(make_shared<YZRect>(0, 555, 0, 555, 555, green));
+    objects.add(make_shared<YZRect>(0, 555, 0, 555, 0, red));
+    objects.add(make_shared<XZRect>(213, 343, 227, 332, 554, light));
+    objects.add(make_shared<XZRect>(0, 555, 0, 555, 0, white));
+    objects.add(make_shared<XZRect>(0, 555, 0, 555, 555, white));
+    objects.add(make_shared<XYRect>(0, 555, 0, 555, 555, white));
+
+    return objects;
+}
+
+
+HittableList simple_light() 
+{
+    HittableList objects;
+
+    auto pertext = Color(.3, .3, .3);
+    objects.add(make_shared<Sphere>(Point3(0, -1000, 0), 1000, make_shared<Lambertian>(pertext)));
+    objects.add(make_shared<Sphere>(Point3(0, 2, 0), 2, make_shared<Lambertian>(pertext)));
+
+    auto difflight = make_shared<DiffuseLight>(Color(4, 4, 4));
+    objects.add(make_shared<XYRect>(3, 5, 1, 3, -2, difflight));
+
+    return objects;
+}
 
 HittableList earth() 
 {
@@ -121,9 +156,7 @@ Color ray_color(const Ray& r, Hittable& world, int depth, const Color& backgroun
             return emitted;
     }
 
-    Vec3 unit_direction = unit_vector(r.direction());
-    auto t = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
+    return background;
 }
 
 
@@ -132,22 +165,22 @@ int main()
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 400;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 20;
+    const int samples_per_pixel = 200;
     const int max_depth = 10;
 
 
-    // World: random_scene(), earth()
-    HittableList world = random_scene();
+    // World: random_scene(), earth(), simple_light(), cornell_box()
+    HittableList world = cornell_box();
     Color background(0, 0, 0);
 
     // Camera
-    Point3 lookfrom(13, 2, 3);
-    Point3 lookat(0, 0, 0);
+    Point3 lookfrom(278, 278, -800);
+    Point3 lookat(278, 278, 0);
     Vec3 vup(0, 1, 0); 
     auto dist_to_focus = 10.0;
     auto aperture = 0.1;
 
-    Camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
+    Camera cam(lookfrom, lookat, vup, 40, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
