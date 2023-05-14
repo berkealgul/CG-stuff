@@ -153,9 +153,11 @@
   <ItemGroup>
     <ClInclude Include="src\aabb.h" />
     <ClInclude Include="src\aarect.h" />
+    <ClInclude Include="src\box.h" />
     <ClInclude Include="src\bvhNode.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\color.h" />
+    <ClInclude Include="src\constant_medium.h" />
     <ClInclude Include="src\hittable.h" />
     <ClInclude Include="src\hittableList.h" />
     <ClInclude Include="src\movingSphere.h" />
