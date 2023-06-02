@@ -248,7 +248,7 @@ Color ray_color(const Ray& r, Hittable& world, int depth, const Color& backgroun
 int main()
 {
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 480;
+    const int image_width = 400;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 1000;
     const int max_depth = 50;
@@ -263,7 +263,7 @@ int main()
     Point3 lookat(278, 278, 0);
     Vec3 vup(0, 1, 0); 
     auto dist_to_focus = 10.0;
-    auto aperture = 0.1;
+    auto aperture = 0.0;
 
     Camera cam(lookfrom, lookat, vup, 40, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
@@ -299,7 +299,7 @@ int main()
         }
 
         finished_rows++;
-        std::cerr << "Row finished " << finished_rows << "/" << image_width << '\n';
+        std::cerr << "Row finished " << finished_rows << "/" << image_height << '\n';
     }
 
     auto stop = high_resolution_clock::now();
