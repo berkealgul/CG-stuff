@@ -20,11 +20,13 @@
 #include <chrono>
 using namespace std::chrono;
 
+//#define OPENMP
+
+
 inline int IX(int i, int j, int w)
 {
     return j * w + i;
 }
-
 
 HittableList final_scene()
 {
@@ -248,14 +250,14 @@ Color ray_color(const Ray& r, Hittable& world, int depth, const Color& backgroun
 int main()
 {
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 400;
+    const int image_width = 1280;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000;
+    const int samples_per_pixel = 500;
     const int max_depth = 50;
 
 
     // World: random_scene(), earth(), simple_light(), cornell_box(), final_scene()
-    HittableList world = final_scene();
+    HittableList world = cornell_box();
     Color background(0, 0, 0);
 
     // Camera
@@ -275,10 +277,12 @@ int main()
     int finished_rows = 0;
 
     // Render
+#ifdef OPENMP
 #pragma omp parallel for \
   default(none) \
   shared(image_buffer, finished_rows) \
   num_threads(8)
+#endif
     for (int j = image_height-1; j >= 0; --j)
     {
         for (int i = 0; i < image_width; i++)
