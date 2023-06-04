@@ -17,7 +17,16 @@
 #include "constant_medium.h"
 
 #include <iostream>
+#include <chrono>
+using namespace std::chrono;
 
+//#define OPENMP
+
+
+inline int IX(int i, int j, int w)
+{
+    return j * w + i;
+}
 
 HittableList final_scene()
 {
@@ -241,14 +250,14 @@ Color ray_color(const Ray& r, Hittable& world, int depth, const Color& backgroun
 int main()
 {
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 400;
+    const int image_width = 1280;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 500;
-    const int max_depth = 30;
+    const int max_depth = 50;
 
 
     // World: random_scene(), earth(), simple_light(), cornell_box(), final_scene()
-    HittableList world = final_scene();
+    HittableList world = cornell_box();
     Color background(0, 0, 0);
 
     // Camera
@@ -256,19 +265,32 @@ int main()
     Point3 lookat(278, 278, 0);
     Vec3 vup(0, 1, 0); 
     auto dist_to_focus = 10.0;
-    auto aperture = 0.1;
+    auto aperture = 0.0;
 
     Camera cam(lookfrom, lookat, vup, 40, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
-    // Render
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    // image buffer to store pixel colors
+    std::vector<Color> image_buffer(image_width * image_height);
 
+    auto start = high_resolution_clock::now();
+
+    int finished_rows = 0;
+
+    // Render
+#ifdef OPENMP
+#pragma omp parallel for \
+  default(none) \
+  shared(image_buffer, finished_rows) \
+  num_threads(8)
+#endif
     for (int j = image_height-1; j >= 0; --j)
     {
         for (int i = 0; i < image_width; i++)
         {
+            // Render single pixel
             Color c(0, 0, 0);
 
+            // for anti alising
             for (int s = 0; s < samples_per_pixel; s++)
             {
                 double u = double(i + random_double()) / (image_width - 1);
@@ -277,11 +299,22 @@ int main()
                 c = c + ray_color(r, world, max_depth, background);
             }
 
-            //std::cerr << i << " " << j << std::endl;
-
-            write_color(std::cout, c,  samples_per_pixel);
+            image_buffer[IX(i, j, image_width)] = c;
         }
+
+        finished_rows++;
+        std::cerr << "Row finished " << finished_rows << "/" << image_height << '\n';
     }
-        
-    std::cerr << "Done!" << '\n';
+
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<seconds>(stop - start);
+    std::cerr << "Done! in: " << duration.count() << '\n';
+
+    // Write image
+    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    for (int j = image_height - 1; j >= 0; --j)
+        for (int i = 0; i < image_width; i++)
+            write_color(std::cout, image_buffer[IX(i, j, image_width)], samples_per_pixel);
+
+    return 0;
 }
