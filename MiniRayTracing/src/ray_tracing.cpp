@@ -22,6 +22,10 @@ using namespace std::chrono;
 
 //#define OPENMP
 
+#ifdef  OPENMP
+#include <omp.h>
+#endif
+
 
 inline int IX(int i, int j, int w)
 {
@@ -281,7 +285,7 @@ int main()
 #pragma omp parallel for \
   default(none) \
   shared(image_buffer, finished_rows) \
-  num_threads(8)
+  num_threads(omp_get_max_threads())
 #endif
     for (int j = image_height-1; j >= 0; --j)
     {
